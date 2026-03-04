@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>NPuls — Werk Hiërarchie</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root {
+  --npuls-blue: #3D68B2;
+  --jira-theme:   #0052CC;
+  --jira-init:    #FF7A00;
+  --jira-epic:    #8777D9;
+  --jira-story:   #36B37E;
+  --jira-sub:     #00B8D9;
+  --warn:  #C0392B;
+  --tip:   #15B58A;
+  --info:  #3D68B2;
+  --text:  #1a1a2e;
+  --gray1: #f4f4f4;
+  --gray2: #e2e2e2;
+  --gray3: #888;
+}
+
+body {
+  background: #fff;
+  font-family: 'Barlow', sans-serif;
+  width: 1280px;
+  height: 720px;
+  overflow: hidden;
+  color: var(--text);
+}
+
+/* ── HEADER ──────────────────────────────────────── */
+.hdr {
+  background: var(--npuls-blue);
+  height: 44px;
+  display: flex; align-items: center; padding: 0 24px;
+  gap: 16px;
+}
+.hdr-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: .2em;
+  text-transform: uppercase; color: rgba(255,255,255,.55);
+}
+.hdr h1 {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 20px; font-weight: 700; color: white; letter-spacing: .04em;
+}
+
+/* ── LAYOUT ──────────────────────────────────────── */
+.main {
+  display: flex;
+  height: 676px;
+}
+
+/* ── LEFT PANEL ──────────────────────────────────── */
+.left {
+  width: 430px;
+  flex-shrink: 0;
+  border-right: 1px solid var(--gray2);
+  padding: 14px 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.panel-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .15em;
+  text-transform: uppercase; color: var(--gray3);
+  margin-bottom: 10px;
+}
+
+/* Each hierarchy level row */
+.level {
+  display: flex;
+  align-items: stretch;
+  gap: 10px;
+  position: relative;
+}
+
+/* Vertical connector line on left edge */
+.level + .level::before {
+  display: none;
+}
+.v-connector {
+  width: 1px;
+  background: var(--gray2);
+  margin-left: 56px; /* aligns with center of badge */
+  align-self: stretch;
+  flex-shrink: 0;
+}
+/* Arrow tick */
+.v-tick {
+  display: flex;
+  align-items: center;
+  padding-left: 50px;
+  height: 7px;
+}
+.v-tick::after {
+  content: '▾';
+  font-size: 10px;
+  color: var(--gray2);
+  margin-left: -3px;
+}
+
+/* Badge — colored pill with level name */
+.badge {
+  width: 108px;
+  flex-shrink: 0;
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  gap: 6px;
+}
+.badge-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 13px; font-weight: 700; letter-spacing: .05em;
+  color: white; text-transform: uppercase; white-space: nowrap;
+}
+.badge-sub {
+  font-family: 'Barlow', sans-serif;
+  font-size: 8.5px; color: rgba(255,255,255,.7);
+  white-space: nowrap;
+}
+
+/* Heights */
+.lv-theme  .badge { background: var(--jira-theme); height: 46px; }
+.lv-init   .badge { background: var(--jira-init);  height: 40px; }
+.lv-epic   .badge { background: var(--jira-epic);  height: 37px; }
+.lv-story  .badge { background: var(--jira-story); height: 34px; }
+.lv-sub    .badge { background: var(--jira-sub);   height: 30px; }
+
+/* Info side of each level */
+.level-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 5px 0;
+}
+.li-example {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 600; color: var(--text);
+  letter-spacing: .02em; line-height: 1.35;
+}
+.li-meta {
+  font-family: 'Barlow', sans-serif;
+  font-size: 9px; color: var(--gray3);
+  line-height: 1.3; margin-top: 2px;
+}
+.li-dur {
+  display: inline-block;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; font-weight: 700; letter-spacing: .04em;
+  padding: 1px 5px; border-radius: 2px; margin-top: 3px;
+  color: white;
+}
+.lv-theme  .li-dur { background: var(--jira-theme); }
+.lv-init   .li-dur { background: var(--jira-init); }
+.lv-epic   .li-dur { background: var(--jira-epic); }
+.lv-story  .li-dur { background: var(--jira-story); }
+.lv-sub    .li-dur { background: var(--jira-sub); }
+
+/* bottom note */
+.left-note {
+  margin-top: auto;
+  padding-top: 8px;
+  border-top: 1px solid var(--gray2);
+  font-family: 'Barlow', sans-serif;
+  font-size: 9px; color: var(--gray3); line-height: 1.45;
+  font-style: italic;
+}
+
+/* ── RIGHT PANEL ─────────────────────────────────── */
+.right {
+  flex: 1;
+  padding: 14px 18px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 9px;
+}
+
+.right-cols {
+  display: flex;
+  gap: 10px;
+  flex: 1;
+  min-height: 0;
+}
+
+/* Question cards (left sub-col) */
+.q-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.q-card {
+  border: 1px solid var(--gray2);
+  border-radius: 4px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  background: white;
+}
+.qc-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12.5px; font-weight: 700; letter-spacing: .04em; color: var(--text);
+  border-bottom: 1px solid var(--gray2);
+  padding-bottom: 4px; margin-bottom: 2px;
+}
+.qc-body {
+  font-family: 'Barlow', sans-serif;
+  font-size: 9.5px; color: #444; line-height: 1.45;
+}
+.qc-body strong { color: var(--text); }
+
+/* chips */
+.chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 2px; }
+.chip {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 8.5px; font-weight: 700; letter-spacing: .03em;
+  padding: 2px 7px; border-radius: 2px; border: 1px solid;
+  white-space: nowrap;
+}
+.cg { background: rgba(54,179,126,.1); border-color: var(--jira-story); color: #1a6644; }
+.co { background: rgba(255,122,0,.08); border-color: var(--jira-init);  color: #803d00; }
+.cr { background: rgba(192,57,43,.08); border-color: #c0392b;           color: #7a1e10; }
+.cp { background: rgba(135,119,217,.1);border-color: var(--jira-epic);  color: #4a3a9a; }
+.cb { background: rgba(0,82,204,.08);  border-color: var(--jira-theme); color: #003a8a; }
+.ct { background: rgba(0,184,217,.1);  border-color: var(--jira-sub);   color: #00607a; }
+
+/* Reality cards (right sub-col) */
+.r-col {
+  width: 278px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Timeline */
+.tl {
+  border: 1px solid var(--gray2);
+  border-radius: 4px;
+  padding: 9px 12px;
+  background: var(--gray1);
+}
+.tl-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--gray3);
+  margin-bottom: 6px;
+}
+.tl-row {
+  display: flex; align-items: center; gap: 7px; margin-bottom: 4px;
+}
+.tl-row:last-child { margin-bottom: 0; }
+.tl-lbl {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9.5px; font-weight: 700; color: white;
+  border-radius: 2px; padding: 1px 5px;
+  width: 68px; text-align: center; flex-shrink: 0;
+}
+.tl-bar-w { flex: 1; height: 7px; background: var(--gray2); border-radius: 2px; overflow: hidden; }
+.tl-bar { height: 100%; border-radius: 2px; }
+.tl-dur {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 8.5px; font-weight: 600; color: var(--gray3);
+  width: 62px; text-align: right; flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* insight blocks */
+.ins {
+  border-radius: 4px;
+  padding: 9px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ins-warn { background: rgba(192,57,43,.06); border: 1px solid rgba(192,57,43,.22); }
+.ins-tip  { background: rgba(21,181,138,.06); border: 1px solid rgba(21,181,138,.22); }
+.ins-info { background: rgba(61,104,178,.06); border: 1px solid rgba(61,104,178,.2); }
+
+.ins-head {
+  display: flex; align-items: flex-start; gap: 6px;
+}
+.ins-ico { font-size: 13px; flex-shrink: 0; line-height: 1.2; }
+.ins-title {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .03em;
+}
+.ins-warn .ins-title { color: #8b2010; }
+.ins-tip  .ins-title { color: #0a6644; }
+.ins-info .ins-title { color: #1e3d7a; }
+.ins-body {
+  font-family: 'Barlow', sans-serif;
+  font-size: 9px; line-height: 1.45; color: #444;
+}
+.ins-body strong { color: var(--text); }
+
+/* ── BOTTOM STRIP ────────────────────────────────── */
+.bottom {
+  background: #f0f4fb;
+  border: 1px solid rgba(61,104,178,.18);
+  border-radius: 4px;
+  padding: 7px 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.b-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: .08em;
+  text-transform: uppercase; color: #1e3d7a;
+  flex-shrink: 0; white-space: nowrap;
+}
+.b-flow {
+  display: flex; align-items: center; gap: 4px; flex: 1;
+}
+.b-node {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9.5px; font-weight: 700; letter-spacing: .03em;
+  padding: 3px 8px; border-radius: 2px; color: white; white-space: nowrap;
+}
+.b-arr { font-size: 10px; color: var(--gray3); flex-shrink: 0; }
+.b-note {
+  font-family: 'Barlow', sans-serif;
+  font-size: 8.5px; color: #555; white-space: nowrap;
+  text-align: center; line-height: 1.2;
+}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-label">NPuls · PMT</div>
+  <h1>De werk­hiërarchie — van dagelijkse taak tot strategisch doel</h1>
+</div>
+
+<div class="main">
+
+  <!-- ═══ LEFT ═══ -->
+  <div class="left">
+    <div class="panel-label">Hiërarchie van werk in Jira</div>
+
+    <!-- THEMA -->
+    <div class="level lv-theme">
+      <div class="badge">
+        <div>
+          <div class="badge-name">Thema</div>
+          <div class="badge-sub">/ Objective</div>
+        </div>
+      </div>
+      <div class="level-info">
+        <div class="li-example">Ondersteunen van instellingen bij de inzet en het gebruik van digitale sectorvoorzieningen</div>
+        <div class="li-meta">Sectordoel / strategische richting</div>
+        <div class="li-dur">Heel programma</div>
+      </div>
+    </div>
+
+    <div class="v-connector" style="height:6px;"></div>
+    <div class="v-tick"></div>
+
+    <!-- INITIATIEF -->
+    <div class="level lv-init">
+      <div class="badge">
+        <div>
+          <div class="badge-name">Initiatief</div>
+        </div>
+      </div>
+      <div class="level-info">
+        <div class="li-example">Adoptie-team — Proactieve adoptie-ondersteuning<br>Adoptie-team — Inzicht &amp; Monitoring</div>
+        <div class="li-meta">Samenhangende aanpak over meerdere cycli</div>
+        <div class="li-dur">~1 jaar</div>
+      </div>
+    </div>
+
+    <div class="v-connector" style="height:6px;"></div>
+    <div class="v-tick"></div>
+
+    <!-- EPIC -->
+    <div class="level lv-epic">
+      <div class="badge">
+        <div>
+          <div class="badge-name">Epic</div>
+        </div>
+      </div>
+      <div class="level-info">
+        <div class="li-example">CopyrightCheck v2 Ondersteuning<br>Workshops adoptieniveaus 2026 4M<br>Adoptiegraad Standaard Verhogen</div>
+        <div class="li-meta">Afgebakend doel, één 4M-cyclus</div>
+        <div class="li-dur">Max. 4 maanden</div>
+      </div>
+    </div>
+
+    <div class="v-connector" style="height:6px;"></div>
+    <div class="v-tick"></div>
+
+    <!-- STORY -->
+    <div class="level lv-story">
+      <div class="badge">
+        <div>
+          <div class="badge-name">Story</div>
+        </div>
+      </div>
+      <div class="level-info">
+        <div class="li-example">Training CRC<br>Inventarisatie: wat is er en wat is er nodig<br>Ontwikkelen / aanpassen trainingsmateriaal</div>
+        <div class="li-meta">Werkbaar geheel, levert directe waarde</div>
+        <div class="li-dur">1–2 sprints</div>
+      </div>
+    </div>
+
+    <div class="v-connector" style="height:6px;"></div>
+    <div class="v-tick"></div>
+
+    <!-- SUBTAAK -->
+    <div class="level lv-sub">
+      <div class="badge">
+        <div>
+          <div class="badge-name">Subtaak</div>
+        </div>
+      </div>
+      <div class="level-info">
+        <div class="li-example">Geven trainingen — Wie?&nbsp; · &nbsp;Advies<br>ROCMN &amp; Xerte ontsluiten op edusources</div>
+        <div class="li-meta">Concrete uitvoerbare actie</div>
+        <div class="li-dur">Dagen</div>
+      </div>
+    </div>
+
+    <div class="left-note" style="margin-top:10px;">
+      Elk aanvraagje of idee behoort ergens in deze boom thuis — de vraag is alleen <em>waar</em>.
+    </div>
+  </div>
+
+  <!-- ═══ RIGHT ═══ -->
+  <div class="right">
+    <div class="panel-label">Wat betekent dit voor nieuwe aanvragen &amp; ideeën?</div>
+
+    <div class="right-cols">
+
+      <!-- question cards -->
+      <div class="q-col">
+
+        <div class="q-card">
+          <div class="qc-title">Sluit het aan bij iets dat al bestaat?</div>
+          <div class="qc-body">
+            Is de aanvraag een aanvulling op een bestaande Story, Epic of Initiatief? Dan past het mogelijk <strong>binnen de huidige periode</strong>. Hoe hoger in de boom een nieuw item nodig is, hoe langer het duurt voor het opgepakt kan worden.
+          </div>
+          <div class="chips">
+            <span class="chip ct">Aanvulling op Subtaak → nu</span>
+            <span class="chip cg">Nieuwe Story in bestaand Epic → snel</span>
+            <span class="chip cp">Nieuw Epic nodig → volgende 4M</span>
+            <span class="chip co">Nieuw Initiatief nodig → volgend jaar</span>
+            <span class="chip cb">Nieuw Thema → strategisch gesprek</span>
+          </div>
+        </div>
+
+        <div class="q-card">
+          <div class="qc-title">Is er een link met een bestaand Thema of Sectordoel?</div>
+          <div class="qc-body">
+            Zonder aansluiting bij een voorgedefinieerd Thema is de kans op prioritering klein — <strong>hoe goed het idee ook is</strong>. De Thema's staan vast en zijn door het programma bepaald.
+          </div>
+          <div class="chips">
+            <span class="chip cg">Link met Thema → kans op prio groot</span>
+            <span class="chip cr">Geen Thema-link → kans op prio klein</span>
+          </div>
+        </div>
+
+        <div class="q-card">
+          <div class="qc-title">Hoeveel waarde levert het t.o.v. wat al geprioriteerd is?</div>
+          <div class="qc-body">
+            Bestaande Epics en Initiatieven zijn al beoordeeld op waarde en effort. Een nieuw item <strong>concurreert direct</strong> met wat er al in de backlog staat — en moet meer waarde leveren om hogere prioriteit te krijgen.
+          </div>
+          <div class="chips">
+            <span class="chip cg">Hogere waarde + lager effort → wint prio</span>
+            <span class="chip co">Vergelijkbaar → wachtlijst</span>
+            <span class="chip cr">Onduidelijk of lager → wordt afgewezen</span>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- reality column -->
+      <div class="r-col">
+
+        <!-- timeline -->
+        <div class="tl">
+          <div class="tl-title">Doorlooptijd per niveau</div>
+          <div class="tl-row">
+            <div class="tl-lbl" style="background:var(--jira-theme);">Thema</div>
+            <div class="tl-bar-w"><div class="tl-bar" style="width:100%;background:var(--jira-theme);opacity:.75;"></div></div>
+            <div class="tl-dur">Heel programma</div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-lbl" style="background:var(--jira-init);">Initiatief</div>
+            <div class="tl-bar-w"><div class="tl-bar" style="width:70%;background:var(--jira-init);opacity:.8;"></div></div>
+            <div class="tl-dur">~1 jaar</div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-lbl" style="background:var(--jira-epic);">Epic</div>
+            <div class="tl-bar-w"><div class="tl-bar" style="width:40%;background:var(--jira-epic);opacity:.8;"></div></div>
+            <div class="tl-dur">max. 4 maanden</div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-lbl" style="background:var(--jira-story);">Story</div>
+            <div class="tl-bar-w"><div class="tl-bar" style="width:15%;background:var(--jira-story);opacity:.8;"></div></div>
+            <div class="tl-dur">1–2 sprints</div>
+          </div>
+          <div class="tl-row">
+            <div class="tl-lbl" style="background:var(--jira-sub);">Subtaak</div>
+            <div class="tl-bar-w"><div class="tl-bar" style="width:5%;background:var(--jira-sub);opacity:.8;"></div></div>
+            <div class="tl-dur">Dagen</div>
+          </div>
+        </div>
+
+        <div class="ins ins-warn">
+          <div class="ins-head">
+            <span class="ins-ico">⚠️</span>
+            <span class="ins-title">Nieuw Epic of Initiatief nodig?</span>
+          </div>
+          <div class="ins-body">
+            Dan past het <strong>niet in de huidige 4M-periode</strong>. Een nieuw Epic vereist analyse, prioritering via de funnel en 4M-planning — minimaal één cyclus extra.
+          </div>
+        </div>
+
+        <div class="ins ins-tip">
+          <div class="ins-head">
+            <span class="ins-ico">💡</span>
+            <span class="ins-title">Snelste weg naar uitvoering</span>
+          </div>
+          <div class="ins-body">
+            Zoek een <strong>bestaand Epic of Story</strong> waarbij het aansluit. Als Subtaak of nieuwe Story toevoegen kan dan snel — zonder nieuwe prioriteringsronde.
+          </div>
+        </div>
+
+        <div class="ins ins-info">
+          <div class="ins-head">
+            <span class="ins-ico">📋</span>
+            <span class="ins-title">Wil je het formeel aanvragen?</span>
+          </div>
+          <div class="ins-body">
+            Dien in via de Epic Funnel. Minimaal nodig: <strong>Thema-link · waarde-onderbouwing · Epic Hypothese</strong>. Zonder die basis is de kans op prioritering gering.
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- bottom strip -->
+    <div class="bottom">
+      <div class="b-label">Jouw aanvraag is een…</div>
+      <div class="b-flow">
+        <div class="b-node" style="background:var(--jira-sub);">Subtaak</div>
+        <div class="b-note">→ direct<br>uitvoerbaar</div>
+        <div class="b-arr">·</div>
+        <div class="b-node" style="background:var(--jira-story);">Nieuwe Story</div>
+        <div class="b-note">→ in huidig<br>Epic inpassen</div>
+        <div class="b-arr">·</div>
+        <div class="b-node" style="background:var(--jira-epic);">Nieuw Epic</div>
+        <div class="b-note">→ volgende<br>4M-periode</div>
+        <div class="b-arr">·</div>
+        <div class="b-node" style="background:var(--jira-init);">Nieuw Initiatief</div>
+        <div class="b-note">→ volgend<br>jaar</div>
+        <div class="b-arr">·</div>
+        <div class="b-node" style="background:var(--jira-theme);">Nieuw Thema</div>
+        <div class="b-note">→ strategisch<br>gesprek</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
