@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+<meta charset="UTF-8">
+<title>NPuls — Intake & Dispatch Proces</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600;700;800&family=Barlow:wght@300;400;500;600&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root {
+  --npuls:    #3D68B2;
+  --green:    #15B58A;
+  --yellow:   #EFD456;
+  --orange:   #FF7702;
+  --red:      #C0392B;
+  --jira-t:   #0052CC;
+  --jira-i:   #FF7A00;
+  --jira-e:   #8777D9;
+  --jira-s:   #36B37E;
+  --jira-sub: #00B8D9;
+  --bg:       #F6F7FB;
+  --border:   #D8DDE8;
+  --text:     #1a1a2e;
+  --muted:    #667;
+  --lane-h:   55px;
+}
+
+html, body {
+  width: 1280px; min-height: 720px;
+  background: var(--bg);
+  font-family: 'Barlow', sans-serif;
+  color: var(--text);
+  overflow-x: hidden;
+}
+
+/* ── HEADER ─────────────────────────────────── */
+.hdr {
+  background: var(--npuls);
+  height: 44px;
+  display: flex; align-items: center; padding: 0 20px; gap: 14px;
+}
+.hdr-sub { font-family:'Barlow Condensed',sans-serif; font-size:10px; font-weight:700; letter-spacing:.18em; text-transform:uppercase; color:rgba(255,255,255,.5); }
+.hdr h1  { font-family:'Barlow Condensed',sans-serif; font-size:19px; font-weight:700; color:#fff; letter-spacing:.04em; }
+
+/* ── STEP TABS ──────────────────────────────── */
+.steps-bar {
+  display: flex;
+  padding: 10px 16px 0;
+  gap: 4px;
+  background: var(--bg);
+}
+.step-tab {
+  flex: 1;
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-bottom: none;
+  border-radius: 4px 4px 0 0;
+  padding: 7px 8px 8px;
+  cursor: pointer;
+  position: relative;
+  transition: background .15s, border-color .15s;
+  display: flex; flex-direction: column; gap: 2px;
+}
+.step-tab:hover { background: #eef2fb; }
+.step-tab.active {
+  background: #fff;
+  border-color: var(--npuls);
+  border-bottom: 2px solid #fff;
+  z-index: 2;
+}
+.step-tab.active .st-num { color: var(--npuls); }
+.step-tab.active .st-name { color: var(--npuls); }
+
+.st-num {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; font-weight: 700; letter-spacing: .1em;
+  color: var(--muted); text-transform: uppercase;
+}
+.st-name {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11.5px; font-weight: 700; letter-spacing: .04em;
+  color: var(--text); line-height: 1.2;
+}
+.st-q {
+  font-family: 'Barlow', sans-serif;
+  font-size: 8.5px; color: var(--muted); line-height: 1.2;
+  font-style: italic;
+}
+
+/* active dot indicator */
+.step-tab.active::after {
+  content: '';
+  position: absolute; bottom: -2px; left: 0; right: 0;
+  height: 2px; background: #fff;
+}
+
+/* color accents per step */
+.step-tab[data-step="1"].active { border-color: #0052CC; }
+.step-tab[data-step="2"].active { border-color: #FF7A00; }
+.step-tab[data-step="3"].active { border-color: #8777D9; }
+.step-tab[data-step="4"].active { border-color: var(--green); }
+.step-tab[data-step="5"].active { border-color: #00B8D9; }
+.step-tab[data-step="6"].active { border-color: var(--orange); }
+.step-tab[data-step="7"].active { border-color: var(--green); }
+.step-tab[data-step="8"].active { border-color: var(--npuls); }
+
+/* ── MAIN PANEL ────────────────────────────── */
+.main-panel {
+  background: #fff;
+  border: 1.5px solid var(--border);
+  border-radius: 0 0 6px 6px;
+  margin: 0 16px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* ── SWIMLANE TABLE ────────────────────────── */
+.swimlane-table {
+  display: flex;
+  flex-direction: column;
+  border-top: none;
+}
+
+.lane {
+  display: flex;
+  border-bottom: 1px solid var(--border);
+  min-height: var(--lane-h);
+}
+.lane:last-child { border-bottom: none; }
+
+.lane-label {
+  width: 128px;
+  flex-shrink: 0;
+  background: #f4f5f9;
+  border-right: 1px solid var(--border);
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+.ll-role {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 11px; font-weight: 700; letter-spacing: .04em;
+  color: var(--text); text-transform: uppercase;
+}
+.ll-layer {
+  font-family: 'Barlow', sans-serif;
+  font-size: 8.5px; color: var(--muted);
+}
+.ll-layer span {
+  display: inline-block;
+  font-size: 7.5px; font-weight: 700; letter-spacing: .05em;
+  padding: 1px 4px; border-radius: 2px; color: white; margin-right: 2px;
+}
+.ly-strat { background: var(--jira-t); }
+.ly-ops   { background: var(--jira-e); }
+.ly-exec  { background: var(--jira-s); }
+.ly-tech  { background: var(--jira-sub); }
+
+.lane-content {
+  flex: 1;
+  padding: 8px 14px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+}
+
+/* Content blocks */
+.lc-main {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 12px; font-weight: 600; color: var(--text);
+  letter-spacing: .02em; line-height: 1.35;
+}
+.lc-detail {
+  font-family: 'Barlow', sans-serif;
+  font-size: 9.5px; color: #444; line-height: 1.4;
+}
+.lc-empty {
+  font-family: 'Barlow', sans-serif;
+  font-size: 9px; color: #ccc; font-style: italic;
+}
+
+/* chips inside lanes */
+.lc-chips { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 1px; }
+.lchip {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 8.5px; font-weight: 700; letter-spacing: .03em;
+  padding: 1px 7px; border-radius: 2px; border: 1px solid;
+  white-space: nowrap;
+}
+.lc-g  { background: rgba(21,181,138,.1);  border-color: var(--green);   color: #0a6644; }
+.lc-b  { background: rgba(0,82,204,.08);   border-color: var(--jira-t);  color: #00348a; }
+.lc-p  { background: rgba(135,119,217,.1); border-color: var(--jira-e);  color: #4a3a9a; }
+.lc-o  { background: rgba(255,122,0,.08);  border-color: var(--jira-i);  color: #803d00; }
+.lc-t  { background: rgba(0,184,217,.1);   border-color: var(--jira-sub);color: #00607a; }
+.lc-r  { background: rgba(192,57,43,.08);  border-color: var(--red);     color: #7a1e10; }
+.lc-y  { background: rgba(239,212,86,.15); border-color: #c8a000;        color: #5a4800; }
+
+/* decision diamond */
+.decision {
+  display: inline-flex; align-items: center; gap: 5px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; color: var(--text);
+}
+.decision::before {
+  content: '◆';
+  font-size: 11px;
+}
+
+/* answer rows */
+.ans-row {
+  display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap;
+}
+.ans-item {
+  display: flex; align-items: flex-start; gap: 4px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 9.5px; color: #333; line-height: 1.35;
+}
+.ans-icon { font-size: 11px; flex-shrink: 0; }
+
+/* step indicator strip at top of main panel */
+.step-indicator {
+  background: linear-gradient(90deg, var(--step-color, var(--npuls)) 0, var(--step-color, var(--npuls)) 100%);
+  height: 3px;
+  transition: background .2s;
+}
+
+/* question header in panel */
+.panel-header {
+  padding: 10px 14px 8px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 10px;
+  background: #fafbfd;
+}
+.ph-step {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+}
+.ph-q {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 15px; font-weight: 700; letter-spacing: .03em;
+  color: var(--text);
+}
+.ph-tag {
+  margin-left: auto;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; font-weight: 700; letter-spacing: .06em;
+  padding: 2px 8px; border-radius: 2px; color: white;
+}
+
+/* step panels — only one visible */
+.step-panel { display: none; }
+.step-panel.active { display: flex; flex-direction: column; }
+
+/* step 2+ content split */
+.content-split {
+  display: flex;
+  gap: 0;
+  flex: 1;
+}
+.cs-left {
+  flex: 1;
+  padding: 10px 14px;
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column; gap: 6px;
+}
+.cs-right {
+  width: 320px;
+  flex-shrink: 0;
+  padding: 10px 14px;
+  display: flex; flex-direction: column; gap: 6px;
+  background: #fafbfd;
+}
+.cs-label {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; font-weight: 700; letter-spacing: .12em;
+  text-transform: uppercase; color: var(--muted);
+  margin-bottom: 2px;
+}
+
+/* owners row */
+.owners-row {
+  display: flex; gap: 5px; flex-wrap: wrap;
+}
+.owner-badge {
+  display: flex; align-items: center; gap: 4px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 10px; font-weight: 700;
+  padding: 3px 8px; border-radius: 2px;
+  border: 1px solid;
+}
+.ob-lead { background: rgba(0,82,204,.1); border-color: var(--jira-t); color: #003a8a; }
+.ob-sup  { background: rgba(21,181,138,.1); border-color: var(--green); color: #0a5e42; }
+.ob-inf  { background: rgba(135,119,217,.1); border-color: var(--jira-e); color: #4a3a9a; }
+.ob-cons { background: #f4f5f9; border-color: #bbb; color: #555; }
+
+/* storymap mini visual */
+.sm-grid {
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.sm-header-row {
+  display: flex;
+  background: #f0f3fa;
+  border-bottom: 1px solid var(--border);
+}
+.sm-col-h {
+  flex: 1; border-right: 1px solid var(--border);
+  padding: 3px 6px;
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 9px; font-weight: 700; color: var(--npuls);
+  letter-spacing: .04em;
+}
+.sm-col-h:last-child { border-right: none; }
+.sm-body-row {
+  display: flex; border-bottom: 1px solid #f0f0f0;
+}
+.sm-body-row:last-child { border-bottom: none; }
+.sm-cell {
+  flex: 1; border-right: 1px solid #f0f0f0;
+  padding: 3px 5px;
+  font-family: 'Barlow', sans-serif;
+  font-size: 8px; color: #444; line-height: 1.3;
+  min-height: 22px;
+}
+.sm-cell:last-child { border-right: none; }
+.sm-cell.owner {
+  font-family: 'Barlow Condensed', sans-serif;
+  font-size: 8.5px; font-weight: 700;
+}
+.sm-cell.team-a { background: rgba(21,181,138,.07); }
+.sm-cell.team-b { background: rgba(61,104,178,.07); }
+.sm-cell.team-c { background: rgba(135,119,217,.08); }
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="hdr-sub">NPuls · PMT</div>
+  <h1>Intake & Dispatch — van vraag tot uitvoering</h1>
+</div>
+
+<!-- STEP TABS -->
+<div class="steps-bar">
+  <div class="step-tab active" data-step="1" onclick="setStep(1)">
+    <div class="st-num">Stap 1</div>
+    <div class="st-name">Wat voor vraag?</div>
+    <div class="st-q">Use case bepalen</div>
+  </div>
+  <div class="step-tab" data-step="2" onclick="setStep(2)">
+    <div class="st-num">Stap 2</div>
+    <div class="st-name">Architectuurlaag</div>
+    <div class="st-q">Waar landt het?</div>
+  </div>
+  <div class="step-tab" data-step="3" onclick="setStep(3)">
+    <div class="st-num">Stap 3</div>
+    <div class="st-name">Eigenaarschap</div>
+    <div class="st-q">Wie is verantwoordelijk?</div>
+  </div>
+  <div class="step-tab" data-step="4" onclick="setStep(4)">
+    <div class="st-num">Stap 4</div>
+    <div class="st-name">Granulariteit</div>
+    <div class="st-q">Thema · Epic · Story · Taak?</div>
+  </div>
+  <div class="step-tab" data-step="5" onclick="setStep(5)">
+    <div class="st-num">Stap 5</div>
+    <div class="st-name">Rollen &amp; teams</div>
+    <div class="st-q">Wie helpt met wat?</div>
+  </div>
+  <div class="step-tab" data-step="6" onclick="setStep(6)">
+    <div class="st-num">Stap 6</div>
+    <div class="st-name">Story mapping</div>
+    <div class="st-q">Eigenaar per deel?</div>
+  </div>
+  <div class="step-tab" data-step="7" onclick="setStep(7)">
+    <div class="st-num">Stap 7</div>
+    <div class="st-name">Prioriteren &amp; kleiner</div>
+    <div class="st-q">Wat gaat voor?</div>
+  </div>
+  <div class="step-tab" data-step="8" onclick="setStep(8)">
+    <div class="st-num">Stap 8</div>
+    <div class="st-name">Dispatch &amp; inplannen</div>
+    <div class="st-q">Wie pakt het op?</div>
+  </div>
+</div>
+
+<!-- MAIN PANEL -->
+<div class="main-panel">
+
+  <!-- ══ STAP 1: Wat voor vraag / use case ══ -->
+  <div class="step-panel active" id="sp1">
+    <div class="step-indicator" style="--step-color:#0052CC;"></div>
+    <div class="panel-header">
+      <div class="ph-step">Stap 1</div>
+      <div class="ph-q">Wat voor vraag is het? — Use case bepalen</div>
+      <div class="ph-tag" style="background:#0052CC;">Intake</div>
+    </div>
+    <div class="swimlane-table">
+      <!-- Strategisch -->
+      <div class="lane">
+        <div class="lane-label">
+          <div class="ll-role">Strategie</div>
+          <div class="ll-layer"><span class="ly-strat">S</span>PMT / Programmadirectie</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Nieuw Thema of Sectordoelvraag</div>
+          <div class="lc-detail">Is er een structurele behoefte die nog geen plek heeft in de huidige programmarichting? Vraagt om strategische besluitvorming.</div>
+          <div class="lc-chips"><span class="lchip lc-b">Nieuw Thema</span><span class="lchip lc-b">Aanpassing Sectordoel</span></div>
+        </div>
+      </div>
+      <!-- Portfolio / Initiatief -->
+      <div class="lane">
+        <div class="lane-label">
+          <div class="ll-role">Portfolio</div>
+          <div class="ll-layer"><span class="ly-ops">O</span>Domeinlead / PO</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Nieuw Initiatief of Epic nodig</div>
+          <div class="lc-detail">De vraag overstijgt één team of één sprint. Vereist prioritering via de Epic Funnel en 4M-planning.</div>
+          <div class="lc-chips"><span class="lchip lc-o">Nieuw Initiatief (~1 jaar)</span><span class="lchip lc-p">Nieuw Epic (max 4M)</span></div>
+        </div>
+      </div>
+      <!-- Uitvoering -->
+      <div class="lane">
+        <div class="lane-label">
+          <div class="ll-role">Uitvoering</div>
+          <div class="ll-layer"><span class="ly-exec">U</span>Productteam / Kring</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Nieuwe Story of Subtaak binnen bestaand Epic</div>
+          <div class="lc-detail">Past binnen lopende werkstroom. Kan direct in de sprint backlog worden toegevoegd na afstemming met PO.</div>
+          <div class="lc-chips"><span class="lchip lc-g">Nieuwe Story</span><span class="lchip lc-t">Subtaak / bugfix</span><span class="lchip lc-g">Aanvulling bestaand work</span></div>
+        </div>
+      </div>
+      <!-- Technisch -->
+      <div class="lane">
+        <div class="lane-label">
+          <div class="ll-role">Technisch</div>
+          <div class="ll-layer"><span class="ly-tech">T</span>Architectuur / Infra</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Technische enabler of architectuurvraag</div>
+          <div class="lc-detail">Vraag die een platform- of infrastructuurkeuze raakt. Vereist architectuuroverleg vóór uitvoering.</div>
+          <div class="lc-chips"><span class="lchip lc-t">Platform enabler</span><span class="lchip lc-t">Architectuurcheck nodig</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAP 2: Architectuurlaag ══ -->
+  <div class="step-panel" id="sp2">
+    <div class="step-indicator" style="--step-color:#FF7A00;"></div>
+    <div class="panel-header">
+      <div class="ph-step">Stap 2</div>
+      <div class="ph-q">Op welke laag in de organisatie landt dit?</div>
+      <div class="ph-tag" style="background:#FF7A00;">Positionering</div>
+    </div>
+    <div class="content-split">
+      <div class="cs-left">
+        <div class="cs-label">Organisatielagen</div>
+        <div class="swimlane-table" style="border:1px solid var(--border);border-radius:3px;overflow:hidden;">
+          <div class="lane" style="min-height:44px;">
+            <div class="lane-label" style="background:rgba(0,82,204,.07);">
+              <div class="ll-role" style="color:var(--jira-t);">Strategie</div>
+              <div class="ll-layer">Programma-niveau</div>
+            </div>
+            <div class="lane-content">
+              <div class="lc-main">Thema's · Sectordoelen · Programmarichtingen</div>
+              <div class="lc-detail">Bepaalt <em>waarom</em> we iets doen. Vastgesteld door programma­directie. Verandert zelden.</div>
+            </div>
+          </div>
+          <div class="lane" style="min-height:44px;">
+            <div class="lane-label" style="background:rgba(135,119,217,.07);">
+              <div class="ll-role" style="color:var(--jira-e);">Operations</div>
+              <div class="ll-layer">Portfolio-niveau</div>
+            </div>
+            <div class="lane-content">
+              <div class="lc-main">Initiatieven · Epics · Prioriteitenlijst</div>
+              <div class="lc-detail">Bepaalt <em>wat</em> we doen en in welke volgorde. Domeinleads en PO's zijn hier leidend.</div>
+            </div>
+          </div>
+          <div class="lane" style="min-height:44px;">
+            <div class="lane-label" style="background:rgba(54,179,126,.07);">
+              <div class="ll-role" style="color:var(--jira-s);">Uitvoering</div>
+              <div class="ll-layer">Team-niveau</div>
+            </div>
+            <div class="lane-content">
+              <div class="lc-main">Stories · Subtaken · Sprints</div>
+              <div class="lc-detail">Bepaalt <em>hoe</em> we het doen. Productteams en kringen werken hier dagelijks.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cs-right">
+        <div class="cs-label">Beslisregel</div>
+        <div style="font-family:'Barlow',sans-serif;font-size:10px;color:#333;line-height:1.5;">
+          <p>Bepaal eerst <strong>op welke laag de vraag thuishoort</strong> — niet op welke laag de vraag binnenkomt.</p>
+          <p style="margin-top:6px;">Een operationele vraag die strategisch wordt opgetild kost tijd en politieke energie. Een strategische vraag die operationeel wordt behandeld mist context.</p>
+        </div>
+        <div style="margin-top:8px;">
+          <div class="cs-label">Signalen per laag</div>
+          <div style="display:flex;flex-direction:column;gap:4px;margin-top:4px;">
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <span class="lchip lc-b" style="flex-shrink:0;">Strategie</span>
+              <span style="font-size:9px;color:#555;">Raakt meerdere domeinen, nieuw budget nodig, geen bestaand thema</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <span class="lchip lc-p" style="flex-shrink:0;">Operations</span>
+              <span style="font-size:9px;color:#555;">Looptijd &gt;1 sprint, meerdere teams, vraagt om prioritering</span>
+            </div>
+            <div style="display:flex;gap:6px;align-items:flex-start;">
+              <span class="lchip lc-g" style="flex-shrink:0;">Uitvoering</span>
+              <span style="font-size:9px;color:#555;">Concreet, klein, past binnen lopend Epic of Story</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAP 3: Eigenaarschap ══ -->
+  <div class="step-panel" id="sp3">
+    <div class="step-indicator" style="--step-color:#8777D9;"></div>
+    <div class="panel-header">
+      <div class="ph-step">Stap 3</div>
+      <div class="ph-q">Wie is eigenaar van dit item?</div>
+      <div class="ph-tag" style="background:#8777D9;">Eigenaarschap</div>
+    </div>
+    <div class="content-split">
+      <div class="cs-left">
+        <div class="cs-label">Eigenaarschap per granulariteit</div>
+        <table style="width:100%;border-collapse:collapse;font-size:9.5px;">
+          <thead>
+            <tr style="background:#f4f5f9;">
+              <th style="padding:5px 8px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.08em;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);">NIVEAU</th>
+              <th style="padding:5px 8px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.08em;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);">EIGENAAR</th>
+              <th style="padding:5px 8px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.08em;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);">BESLUIT</th>
+              <th style="padding:5px 8px;text-align:left;font-family:'Barlow Condensed',sans-serif;font-size:9px;letter-spacing:.08em;color:var(--muted);font-weight:700;border-bottom:1px solid var(--border);">CONSULTEERT</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:6px 8px;"><span class="lchip lc-b">Thema</span></td>
+              <td style="padding:6px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;">Programma­directie</td>
+              <td style="padding:6px 8px;font-size:9px;color:#444;">Vaststellen programmarichting</td>
+              <td style="padding:6px 8px;font-size:9px;color:#888;">Domeinleads, stakeholders</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:6px 8px;"><span class="lchip lc-o">Initiatief</span></td>
+              <td style="padding:6px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;">Domeinlead</td>
+              <td style="padding:6px 8px;font-size:9px;color:#444;">Prioritering &amp; jaarplanning</td>
+              <td style="padding:6px 8px;font-size:9px;color:#888;">PO's, portfoliomanager</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:6px 8px;"><span class="lchip lc-p">Epic</span></td>
+              <td style="padding:6px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;">Product Owner</td>
+              <td style="padding:6px 8px;font-size:9px;color:#444;">Scope, doel, definitie of done</td>
+              <td style="padding:6px 8px;font-size:9px;color:#888;">Kringleden, architect</td>
+            </tr>
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:6px 8px;"><span class="lchip lc-g">Story</span></td>
+              <td style="padding:6px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;">PO + Dev Lead</td>
+              <td style="padding:6px 8px;font-size:9px;color:#444;">Acceptatiecriteria</td>
+              <td style="padding:6px 8px;font-size:9px;color:#888;">Team</td>
+            </tr>
+            <tr>
+              <td style="padding:6px 8px;"><span class="lchip lc-t">Subtaak</span></td>
+              <td style="padding:6px 8px;font-family:'Barlow Condensed',sans-serif;font-weight:700;font-size:10px;">Teamlid</td>
+              <td style="padding:6px 8px;font-size:9px;color:#444;">Uitvoering &amp; afsluiting</td>
+              <td style="padding:6px 8px;font-size:9px;color:#888;">—</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cs-right">
+        <div class="cs-label">RACI samengevat</div>
+        <div style="font-size:9px;color:#444;line-height:1.5;font-family:'Barlow',sans-serif;">
+          <p><strong>R</strong>esponsible — voert uit</p>
+          <p><strong>A</strong>ccountable — eindverantwoordelijk</p>
+          <p><strong>C</strong>onsulted — geraadpleegd</p>
+          <p><strong>I</strong>nformed — geïnformeerd</p>
+        </div>
+        <div style="margin-top:10px;background:rgba(192,57,43,.06);border:1px solid rgba(192,57,43,.2);border-radius:3px;padding:8px 10px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:10.5px;font-weight:700;color:#7a1e10;margin-bottom:3px;">⚠ Valkuil</div>
+          <div style="font-size:9px;color:#444;line-height:1.4;">Zonder duidelijk eigenaar wordt werk niet geprioriteerd, niet ingepland en niet opgeleverd. Stel altijd als eerste vast: <strong>wie is de A?</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAP 4: Granulariteit ══ -->
+  <div class="step-panel" id="sp4">
+    <div class="step-indicator" style="--step-color:#36B37E;"></div>
+    <div class="panel-header">
+      <div class="ph-step">Stap 4</div>
+      <div class="ph-q">Over welke granulariteit gaat het?</div>
+      <div class="ph-tag" style="background:#36B37E;">Granulariteit</div>
+    </div>
+    <div class="swimlane-table">
+      <div class="lane" style="min-height:48px;">
+        <div class="lane-label" style="background:rgba(0,82,204,.06);">
+          <div class="ll-role" style="color:var(--jira-t);">Thema</div>
+          <div class="ll-layer">Heel programma</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Overkoepelende richting — raakt meerdere domeinen, budgetcyclus, meerjarig</div>
+          <div class="lc-chips"><span class="lchip lc-b">Nieuwe richting?</span><span class="lchip lc-b">Link met Sectordoel?</span><span class="lchip lc-r">Geen link → kleine kans op prio</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:48px;">
+        <div class="lane-label" style="background:rgba(255,122,0,.06);">
+          <div class="ll-role" style="color:var(--jira-i);">Initiatief</div>
+          <div class="ll-layer">~1 jaar</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Samenhangende aanpak — meerdere teams, overstijgt kwartaal, eigen roadmap</div>
+          <div class="lc-chips"><span class="lchip lc-o">Past in jaarplan?</span><span class="lchip lc-o">Meerdere teams betrokken?</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:48px;">
+        <div class="lane-label" style="background:rgba(135,119,217,.07);">
+          <div class="ll-role" style="color:var(--jira-e);">Epic</div>
+          <div class="ll-layer">Max 4 maanden</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Afgebakend doel — eigen hypothese, KPIs, story map, één 4M-cyclus</div>
+          <div class="lc-chips"><span class="lchip lc-p">Klopt in één periode?</span><span class="lchip lc-p">Epic Hypothese aanwezig?</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:48px;">
+        <div class="lane-label" style="background:rgba(54,179,126,.06);">
+          <div class="ll-role" style="color:var(--jira-s);">Story</div>
+          <div class="ll-layer">1–2 sprints</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Werkbaar geheel — levert op zichzelf waarde, past in sprint backlog</div>
+          <div class="lc-chips"><span class="lchip lc-g">Past in huidig Epic?</span><span class="lchip lc-g">Duidelijke acceptatiecriteria?</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:44px;">
+        <div class="lane-label" style="background:rgba(0,184,217,.06);">
+          <div class="ll-role" style="color:var(--jira-sub);">Subtaak</div>
+          <div class="ll-layer">Dagen</div>
+        </div>
+        <div class="lane-content">
+          <div class="lc-main">Concrete actie — direct inplanbaar, één persoon, duidelijk gereed-criterium</div>
+          <div class="lc-chips"><span class="lchip lc-t">Direct oppakken</span><span class="lchip lc-t">Één eigenaar</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAP 5: Rollen & Teams ══ -->
+  <div class="step-panel" id="sp5">
+    <div class="step-indicator" style="--step-color:#00B8D9;"></div>
+    <div class="panel-header">
+      <div class="ph-step">Stap 5</div>
+      <div class="ph-q">Welke teams hebben welke rol?</div>
+      <div class="ph-tag" style="background:#00B8D9;">Rollen</div>
+    </div>
+    <div class="swimlane-table">
+      <div class="lane" style="min-height:50px;">
+        <div class="lane-label"><div class="ll-role">PMT</div><div class="ll-layer"><span class="ly-strat">S</span>Strategie</div></div>
+        <div class="lane-content">
+          <div class="lc-main">Bewaakt thema's, keurt nieuwe Initiatieven goed, stelt programmaprioriteiten vast</div>
+          <div class="lc-chips"><span class="lchip lc-b">Accountable op Thema/Initiatief</span><span class="lchip lc-b">Go/no-go nieuwe richtingen</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:50px;">
+        <div class="lane-label"><div class="ll-role">Domeinlead</div><div class="ll-layer"><span class="ly-ops">O</span>Portfolio</div></div>
+        <div class="lane-content">
+          <div class="lc-main">Beheert de Epic Backlog, prioriteert via Portfolio Board, coördineert afhankelijkheden</div>
+          <div class="lc-chips"><span class="lchip lc-o">Accountable op Initiatief/Epic</span><span class="lchip lc-o">Prioritering waarde vs effort</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:50px;">
+        <div class="lane-label"><div class="ll-role">Product Owner</div><div class="ll-layer"><span class="ly-ops">O</span>Epic eigenaar</div></div>
+        <div class="lane-content">
+          <div class="lc-main">Schrijft Epic Hypothese, beheert Story map, stelt acceptatiecriteria op, is aanspreekpunt</div>
+          <div class="lc-chips"><span class="lchip lc-p">Accountable op Epic</span><span class="lchip lc-p">Story map eigenaar</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:50px;">
+        <div class="lane-label"><div class="ll-role">Productteam / Kring</div><div class="ll-layer"><span class="ly-exec">U</span>Uitvoering</div></div>
+        <div class="lane-content">
+          <div class="lc-main">Werkt Stories uit, verzorgt sprintplanning, levert subtaken, geeft effort-inschattingen</div>
+          <div class="lc-chips"><span class="lchip lc-g">Responsible op Story/Subtaak</span><span class="lchip lc-g">Effort inschatting</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:46px;">
+        <div class="lane-label"><div class="ll-role">Architectuur</div><div class="ll-layer"><span class="ly-tech">T</span>Technisch</div></div>
+        <div class="lane-content">
+          <div class="lc-main">Toetst technische haalbaarheid, bewaakt architectuurprincipes, enablet platformkeuzes</div>
+          <div class="lc-chips"><span class="lchip lc-t">Consulted bij Epic/Initiatief</span><span class="lchip lc-t">Architectuurcheck</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAP 6: Story Mapping ══ -->
+  <div class="step-panel" id="sp6">
+    <div class="step-indicator" style="--step-color:#FF7702;"></div>
+    <div class="panel-header">
+      <div class="ph-step">Stap 6</div>
+      <div class="ph-q">Story mapping — welke delen zijn nodig en wie is eigenaar van wat?</div>
+      <div class="ph-tag" style="background:#FF7702;">Story Map</div>
+    </div>
+    <div class="content-split">
+      <div class="cs-left">
+        <div class="cs-label">Voorbeeld story map structuur (Epic: CopyrightCheck v2)</div>
+        <div class="sm-grid">
+          <div class="sm-header-row">
+            <div class="sm-col-h" style="flex:1.5;">User Journey stap</div>
+            <div class="sm-col-h">Release 1<br><span style="font-weight:400;color:#888;font-size:7.5px;">Must have</span></div>
+            <div class="sm-col-h">Release 2<br><span style="font-weight:400;color:#888;font-size:7.5px;">Should have</span></div>
+            <div class="sm-col-h">Release 3<br><span style="font-weight:400;color:#888;font-size:7.5px;">Nice to have</span></div>
+          </div>
+          <div class="sm-body-row">
+            <div class="sm-cell owner team-a" style="flex:1.5;">Inventarisatie</div>
+            <div class="sm-cell team-a">Wat is er aanwezig</div>
+            <div class="sm-cell team-a">Analyse gaps</div>
+            <div class="sm-cell" style="color:#ccc;">—</div>
+          </div>
+          <div class="sm-body-row">
+            <div class="sm-cell owner team-b" style="flex:1.5;">Trainingsmateriaal</div>
+            <div class="sm-cell team-b">Aanpassen bestaand</div>
+            <div class="sm-cell team-b">Nieuw ontwikkelen</div>
+            <div class="sm-cell team-b">Vertalingen</div>
+          </div>
+          <div class="sm-body-row">
+            <div class="sm-cell owner team-c" style="flex:1.5;">Geven trainingen</div>
+            <div class="sm-cell" style="color:#ccc;">—</div>
+            <div class="sm-cell team-c">Pilotgroep</div>
+            <div class="sm-cell team-c">Uitrol breed</div>
+          </div>
+          <div class="sm-body-row">
+            <div class="sm-cell owner" style="flex:1.5;background:rgba(0,184,217,.07);color:var(--jira-sub);">Advies &amp; support</div>
+            <div class="sm-cell">Helpdesk FAQ</div>
+            <div class="sm-cell">1:1 advies</div>
+            <div class="sm-cell">Kennisbase</div>
+          </div>
+        </div>
+        <div style="margin-top:6px;font-size:8.5px;color:var(--muted);font-family:'Barlow',sans-serif;">Kleuren geven aan welk team eigenaar is van een Stories-rij · Kolommen = prioriteitsvolgorde</div>
+      </div>
+      <div class="cs-right">
+        <div class="cs-label">Vragen bij story mapping</div>
+        <div style="display:flex;flex-direction:column;gap:7px;">
+          <div style="font-size:9.5px;color:#333;font-family:'Barlow',sans-serif;line-height:1.4;">
+            <strong>Welke stappen maakt de gebruiker?</strong><br>
+            Doorloop de reis van begin tot eind — niet de techniek, maar de beleving.
+          </div>
+          <div style="font-size:9.5px;color:#333;font-family:'Barlow',sans-serif;line-height:1.4;">
+            <strong>Wat is het minimum werkende geheel?</strong><br>
+            Alles boven de horizontale lijn = Release 1. Strepen wat kan wachten.
+          </div>
+          <div style="font-size:9.5px;color:#333;font-family:'Barlow',sans-serif;line-height:1.4;">
+            <strong>Wie is eigenaar van welke rij?</strong><br>
+            Elke horizontale rij (journey-stap) heeft één verantwoordelijk team.
+          </div>
+          <div style="font-size:9.5px;color:#333;font-family:'Barlow',sans-serif;line-height:1.4;">
+            <strong>Wie doet potentieel wat?</strong><br>
+            Cells kunnen door verschillende teams ingevuld worden — maak dit expliciet.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAP 7: Prioriteren & kleiner maken ══ -->
+  <div class="step-panel" id="sp7">
+    <div class="step-indicator" style="--step-color:#15B58A;"></div>
+    <div class="panel-header">
+      <div class="ph-step">Stap 7</div>
+      <div class="ph-q">Prioriteren, kleiner maken &amp; knippen</div>
+      <div class="ph-tag" style="background:#15B58A;">Prioritering</div>
+    </div>
+    <div class="content-split">
+      <div class="cs-left">
+        <div class="cs-label">Prioriteringsmethode</div>
+        <div class="swimlane-table" style="border:1px solid var(--border);border-radius:3px;overflow:hidden;">
+          <div class="lane" style="min-height:46px;">
+            <div class="lane-label"><div class="ll-role">Waarde</div></div>
+            <div class="lane-content">
+              <div class="lc-main">Hoe groot is de impact op Sectordoel of KPI?</div>
+              <div class="lc-detail">Kwantificeer indien mogelijk. Link altijd aan een Thema. Zonder link → kleine kans.</div>
+            </div>
+          </div>
+          <div class="lane" style="min-height:46px;">
+            <div class="lane-label"><div class="ll-role">Effort</div></div>
+            <div class="lane-content">
+              <div class="lc-main">Hoeveel capaciteit vraagt het van welke teams?</div>
+              <div class="lc-detail">T-shirt sizing (S/M/L/XL) als eerste stap. Verfijn bij Epic-acceptatie.</div>
+            </div>
+          </div>
+          <div class="lane" style="min-height:46px;">
+            <div class="lane-label"><div class="ll-role">Urgentie</div></div>
+            <div class="lane-content">
+              <div class="lc-main">Is er een externe deadline of afhankelijkheid?</div>
+              <div class="lc-detail">Subsidiedeadlines, leverancierscontracten, wettelijke eisen. Vermeld expliciet.</div>
+            </div>
+          </div>
+          <div class="lane" style="min-height:46px;">
+            <div class="lane-label"><div class="ll-role">Kleiner knippen</div></div>
+            <div class="lane-content">
+              <div class="lc-main">Kan het kleiner? Splits het Epic in een MVP + later.</div>
+              <div class="lc-chips"><span class="lchip lc-g">MVP eerste</span><span class="lchip lc-p">Rest naar volgende Epic</span><span class="lchip lc-y">Vertikaal knippen</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="cs-right">
+        <div class="cs-label">Portfolio Board beslissing</div>
+        <div style="background:rgba(61,104,178,.05);border:1px solid rgba(61,104,178,.18);border-radius:3px;padding:10px;">
+          <div style="font-family:'Barlow Condensed',sans-serif;font-size:11px;font-weight:700;color:#1e3d7a;margin-bottom:6px;">Waarde vs Effort matrix</div>
+          <div style="position:relative;height:80px;background:#f5f8ff;border-radius:2px;border:1px solid rgba(61,104,178,.15);">
+            <div style="position:absolute;top:3px;left:50%;font-size:7px;color:#aaa;transform:translateX(-50%);">Waarde →</div>
+            <div style="position:absolute;top:10px;right:8px;width:12px;height:12px;border-radius:50%;background:var(--jira-s);display:flex;align-items:center;justify-content:center;font-size:7px;color:white;font-weight:700;">A</div>
+            <div style="position:absolute;bottom:10px;left:12px;width:10px;height:10px;border-radius:50%;background:var(--jira-i);display:flex;align-items:center;justify-content:center;font-size:7px;color:white;font-weight:700;">B</div>
+            <div style="position:absolute;top:20px;left:40%;width:9px;height:9px;border-radius:50%;background:var(--jira-e);display:flex;align-items:center;justify-content:center;font-size:7px;color:white;font-weight:700;">C</div>
+          </div>
+          <div style="margin-top:6px;font-size:9px;color:#444;line-height:1.4;font-family:'Barlow',sans-serif;">A wint: hoge waarde, lage effort. B wacht. C heroverwegen of knippen.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══ STAP 8: Dispatch & Inplannen ══ -->
+  <div class="step-panel" id="sp8">
+    <div class="step-indicator" style="--step-color:#3D68B2;"></div>
+    <div class="panel-header">
+      <div class="ph-step">Stap 8</div>
+      <div class="ph-q">Dispatchen &amp; inplannen</div>
+      <div class="ph-tag" style="background:#3D68B2;">Dispatch</div>
+    </div>
+    <div class="swimlane-table">
+      <div class="lane" style="min-height:50px;">
+        <div class="lane-label"><div class="ll-role">4M Planning</div><div class="ll-layer"><span class="ly-ops">O</span>Portfolio</div></div>
+        <div class="lane-content">
+          <div class="lc-main">Geprioriteerde Epics worden ingepland in het eerstvolgende 4M-venster</div>
+          <div class="lc-detail">Domeinlead + PO bepalen welk team het oppakt. Team geeft go op capaciteit.</div>
+          <div class="lc-chips"><span class="lchip lc-b">Epic → team toegewezen</span><span class="lchip lc-b">4M-cyclus vastgesteld</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:50px;">
+        <div class="lane-label"><div class="ll-role">Sprint planning</div><div class="ll-layer"><span class="ly-exec">U</span>Uitvoering</div></div>
+        <div class="lane-content">
+          <div class="lc-main">PO + team vertalen Epic in Stories voor de sprint backlog</div>
+          <div class="lc-detail">Stories krijgen acceptatiecriteria, effort-punten en een assignee. Subtaken worden aangemaakt.</div>
+          <div class="lc-chips"><span class="lchip lc-g">Stories ingepland</span><span class="lchip lc-g">Subtaken verdeeld</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:50px;">
+        <div class="lane-label"><div class="ll-role">Agile vs Project</div><div class="ll-layer"><span class="ly-exec">U</span>Aanpak</div></div>
+        <div class="lane-content">
+          <div class="lc-main">Kies bewust de uitvoeringsaanpak op basis van aard van het werk</div>
+          <div class="lc-chips"><span class="lchip lc-g">Agile team — iteratief, onzeker, verkennend</span><span class="lchip lc-b">Project aanpak — helder doel, vaste scope, deadline</span></div>
+        </div>
+      </div>
+      <div class="lane" style="min-height:46px;">
+        <div class="lane-label"><div class="ll-role">Monitoring</div><div class="ll-layer"><span class="ly-strat">S</span>KPI &amp; voortgang</div></div>
+        <div class="lane-content">
+          <div class="lc-main">KPI-voortgang wordt gerapporteerd in 4M-review en terug aan Portfolio Board</div>
+          <div class="lc-chips"><span class="lchip lc-p">Halverwege: health check</span><span class="lchip lc-p">Einde: retrospective + KPI-validatie</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-panel -->
+
+<script>
+function setStep(n) {
+  document.querySelectorAll('.step-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.step-panel').forEach(p => p.classList.remove('active'));
+  document.querySelector('[data-step="'+n+'"]').classList.add('active');
+  document.getElementById('sp'+n).classList.add('active');
+}
+</script>
+</body>
+</html>
